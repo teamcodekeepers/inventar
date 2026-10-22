@@ -123,6 +123,8 @@ Next.js тихо избира друг и приложението не отго
    споделен план), `DEMO_TENANT=demo` превръща целия сайт в тази една организация: адресите са без
    поддомейн, а порталът, регистрацията и `/admin` не се ползват. Нужни са две бази (контролна + `inv_demo`
    в пула), после `pnpm db:migrate && pnpm db:seed`.
+6. **Build на споделен хостинг.** Ако `pnpm build` пада с „node process exited before we could connect to
+   it“ (Turbopack не може да пуска отделни Node процеси), използвайте `pnpm build:webpack`.
 
 ## Функционалности
 

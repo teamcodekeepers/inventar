@@ -44,14 +44,6 @@ const nextConfig: NextConfig = {
       { source: "/reset-password", headers: [{ key: "Referrer-Policy", value: "no-referrer" }] },
     ];
   },
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
 };
 
 export default nextConfig;
