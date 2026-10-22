@@ -37,6 +37,9 @@ process.env.TOKIO_WORKER_THREADS ??= "2";
 const nextConfig: NextConfig = {
   // pdfkit чете собствените си файлове с данни по време на изпълнение — не се пакетира
   serverExternalPackages: ["pdfkit", "bwip-js"],
+  // миграциите се четат от диска при стартиране (AUTO_MIGRATE) — standalone build-ът (Hostinger) иначе не
+  // копира drizzle/control
+  outputFileTracingIncludes: { "/*": ["./drizzle/**/*"] },
   experimental: {
     cpus: 2,
     // Качване на снимки на артикули (до 10 MB на файл); по подразбиране е 1 MB.
