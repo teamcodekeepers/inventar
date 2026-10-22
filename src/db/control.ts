@@ -21,5 +21,6 @@ if (!g.__controlPool) utcSessions(pool);
 g.__controlPool = pool;
 
 /** Контролна база: организации, потребители, сесии. */
-export const controlDb = drizzle(pool, { schema, mode: "default" });
+// "planetscale": релационните заявки без LEFT JOIN LATERAL — MariaDB (Hostinger) не го поддържа
+export const controlDb = drizzle(pool, { schema, mode: "planetscale" });
 export type ControlDb = typeof controlDb;

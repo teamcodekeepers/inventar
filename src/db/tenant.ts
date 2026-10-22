@@ -40,7 +40,8 @@ const MAX_POOLS = 50;
 function open(conn: Conn, limit = 5): Entry {
   const pool = mysql.createPool({ ...conn, connectionLimit: limit, timezone: "Z", charset: "utf8mb4_0900_ai_ci", supportBigNumbers: true });
   utcSessions(pool);
-  return { pool, db: drizzle(pool, { schema, mode: "default" }), lastUsed: Date.now() };
+  // без LATERAL — виж control.ts
+  return { pool, db: drizzle(pool, { schema, mode: "planetscale" }), lastUsed: Date.now() };
 }
 
 /** Връзка към базата на организацията (кеширана; най-старите се затварят при лимит). */
