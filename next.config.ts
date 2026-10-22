@@ -30,10 +30,15 @@ const securityHeaders = [
   ...(dev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" }]),
 ];
 
+// Споделеният хостинг (Hostinger) ограничава броя процеси и нишки. По подразбиране build пуска worker на
+// ядро (63 там), а native модулите — нишка на ядро → „OS can't spawn worker thread“.
+process.env.TOKIO_WORKER_THREADS ??= "2";
+
 const nextConfig: NextConfig = {
   // pdfkit чете собствените си файлове с данни по време на изпълнение — не се пакетира
   serverExternalPackages: ["pdfkit", "bwip-js"],
   experimental: {
+    cpus: 2,
     // Качване на снимки на артикули (до 10 MB на файл); по подразбиране е 1 MB.
     serverActions: { bodySizeLimit: "40mb" },
   },
