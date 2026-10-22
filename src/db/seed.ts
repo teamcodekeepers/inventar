@@ -1,30 +1,38 @@
 /* Демонстрационни данни.  pnpm db:seed
    Създава: организация demo (demo.<APP_DOMAIN>, база inv_demo) и vtora (празна).
-   Вход: admin@demo.bg / demo1234 (собственик), sklad@demo.bg / demo1234 (служител) */
+   Вход: admin@demo.bg / demo1234 (собственик), sklad@demo.bg / demo1234 (служител)
+   TENANT_DB_MODE=manual (споделен хостинг): само demo, в свободна база от пула — веднъж, върху празни бази. */
 import { addDays, format, subDays } from "date-fns";
-import { eq, sql } from "drizzle-orm";
+import { eq, isNotNull, sql } from "drizzle-orm";
 import { migrate } from "drizzle-orm/mysql2/migrator";
 import path from "node:path";
 import { hashPassword } from "../lib/auth-crypto";
 import { controlDb } from "./control";
-import { memberships, organizations, plans, users } from "./control-schema";
+import { databasePool, memberships, organizations, plans, users } from "./control-schema";
 import { dropTenantDatabase, getTenantDb, provisionTenant, tenantDbName, type TenantDb } from "./tenant";
 import * as t from "./tenant-schema";
 
 const iso = (d: Date) => format(d, "yyyy-MM-dd");
 const today = new Date();
+// без CREATE/DROP DATABASE: базите идват от пула и се пазят
+const manual = process.env.TENANT_DB_MODE === "manual";
 
 async function resetControl() {
   await migrate(controlDb, { migrationsFolder: path.join(process.cwd(), "drizzle", "control") });
+  if (manual) {
+    const [used] = await controlDb.select({ id: databasePool.id }).from(databasePool).where(isNotNull(databasePool.assignedOrganizationId)).limit(1);
+    if (used) throw new Error("В пула вече има заета база. В режим manual демо данните се зареждат само веднъж, върху празни бази.");
+  }
   await controlDb.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
-  for (const table of ["rate_limits", "password_resets", "sessions", "memberships", "database_pool", "users", "organizations"]) {
+  const tables = ["rate_limits", "password_resets", "sessions", "memberships", "database_pool", "users", "organizations"];
+  for (const table of manual ? tables.filter((x) => x !== "database_pool") : tables) {
     await controlDb.execute(sql.raw(`TRUNCATE TABLE \`${table}\``));
   }
   await controlDb.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
 }
 
 async function createOrg(name: string, subdomain: string) {
-  await dropTenantDatabase(tenantDbName(subdomain));
+  if (!manual) await dropTenantDatabase(tenantDbName(subdomain));
   const [pro] = await controlDb.select({ id: plans.id }).from(plans).where(eq(plans.code, "pro"));
   const [{ id }] = await controlDb.insert(organizations).values({ name, subdomain, dbName: tenantDbName(subdomain), planId: pro?.id ?? null, subscriptionStatus: "active" }).$returningId();
   const [org] = await controlDb.select().from(organizations).where(eq(organizations.id, id));
@@ -241,19 +249,20 @@ async function main() {
     .$returningId();
 
   const demo = await createOrg("Демо Трейдинг ЕООД", "demo");
-  const vtora = await createOrg("Втора фирма ООД", "vtora");
+  const vtora = manual ? null : await createOrg("Втора фирма ООД", "vtora");
   await controlDb.insert(memberships).values([
     { userId: adminId, organizationId: demo.id, role: "owner" },
-    { userId: adminId, organizationId: vtora.id, role: "owner" },
+    ...(vtora ? [{ userId: adminId, organizationId: vtora.id, role: "owner" as const }] : []),
     { userId: workerId, organizationId: demo.id, role: "staff" },
   ]);
 
   const count = await seedDemo(getTenantDb(demo), { id: adminId, name: "Админ Демо" }, { id: workerId, name: "Иван Складов" });
-  await getTenantDb(vtora).insert(t.locations).values({ name: "Основен склад", code: "MAIN", isDefault: true });
+  if (vtora) await getTenantDb(vtora).insert(t.locations).values({ name: "Основен склад", code: "MAIN", isDefault: true });
 
   const domain = process.env.APP_DOMAIN ?? "localhost:3000";
-  console.log(`Заредени: 2 организации (${demo.dbName}, ${vtora.dbName}), 2 потребители, ${count} артикула в demo.`);
-  console.log(`Вход: http://demo.${domain}/login  ·  admin@demo.bg / demo1234  ·  sklad@demo.bg / demo1234`);
+  const orgs = [demo, vtora].filter((o) => o !== null);
+  console.log(`Заредени: ${orgs.length} организации (${orgs.map((o) => o.dbName).join(", ")}), 2 потребители, ${count} артикула в demo.`);
+  console.log(`Вход: http://${process.env.DEMO_TENANT ? "" : "demo."}${domain}/login  ·  admin@demo.bg / demo1234  ·  sklad@demo.bg / demo1234`);
   console.log(`Портал: http://${domain}/portal`);
 }
 

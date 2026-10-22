@@ -14,7 +14,7 @@ import { str } from "@/lib/forms";
 import { passwordResetMail, sendMail } from "@/lib/mail";
 import { createPasswordLink, findPasswordLink, recentResetExists } from "@/lib/password-tokens";
 import { clear, clientIp, hit, minutes, retryAfter } from "@/lib/rate-limit";
-import { currentTenant, isValidSubdomain, rootUrl, tenantUrl } from "@/lib/tenant";
+import { DEMO_TENANT, currentTenant, isValidSubdomain, rootUrl, tenantUrl } from "@/lib/tenant";
 import { log } from "@/lib/log";
 import { TRIAL_DAYS } from "@/lib/plans";
 import { LEGAL_VERSION } from "@/lib/legal";
@@ -88,6 +88,8 @@ export async function verifyTwoFactor(_prev: string | undefined, fd: FormData): 
 }
 
 /** Нова организация: създава база, прилага миграциите, прави потребителя собственик. */
+const DEMO_NO_NEW_ORGS = "Това е демо версия: нови организации не могат да се създават.";
+
 async function createOrganizationFor(userId: number, name: string, subdomainInput: string) {
   const subdomain = (subdomainInput || suggestSubdomain(name)).toLowerCase();
   if (!isValidSubdomain(subdomain)) throw new UserError("Поддомейнът може да съдържа само малки латински букви, цифри и тире (3–63 знака) и да не е запазена дума.");
@@ -108,6 +110,7 @@ async function createOrganizationFor(userId: number, name: string, subdomainInpu
 }
 
 export async function register(_prev: string | undefined, fd: FormData): Promise<string | undefined> {
+  if (DEMO_TENANT) return DEMO_NO_NEW_ORGS;
   const orgName = str(fd, "organization");
   const subdomain = str(fd, "subdomain");
   const name = str(fd, "name");
@@ -136,6 +139,7 @@ export async function register(_prev: string | undefined, fd: FormData): Promise
 export async function createOrganization(_prev: string | undefined, fd: FormData): Promise<string | undefined> {
   const session = await getSession();
   if (!session) redirect("/login");
+  if (DEMO_TENANT) return DEMO_NO_NEW_ORGS;
   if (!session.user.canCreateOrganizations) return "Нямате право да създавате организации.";
   const name = str(fd, "name");
   if (!name) return "Въведете име на организацията.";

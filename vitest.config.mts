@@ -27,6 +27,7 @@ const env = {
   TENANT_DB_PREFIX: prefix,
   TENANT_DB_MODE: "auto",
   APP_DOMAIN: "inventar.test",
+  DEMO_TENANT: "",
   APP_PROTOCOL: "https",
   APP_SECRET: "test-secret-not-for-production",
   SMTP_HOST: "",

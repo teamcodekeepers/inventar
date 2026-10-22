@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { isValidSubdomain, subdomainFromHost, tenantUrl } from "@/lib/tenant";
 
 // APP_DOMAIN=inventar.test (vitest.config.ts)
@@ -30,4 +30,18 @@ describe("isValidSubdomain", () => {
 
 it("tenantUrl", () => {
   expect(tenantUrl("demo", "/items")).toBe("https://demo.inventar.test/items");
+});
+
+describe("демо режим (DEMO_TENANT)", () => {
+  it("всеки host е демо организацията, адресите са без поддомейн", async () => {
+    vi.stubEnv("DEMO_TENANT", "Demo");
+    vi.resetModules();
+    const t = await import("@/lib/tenant");
+    expect(t.subdomainFromHost("inventar.test")).toBe("demo");
+    expect(t.subdomainFromHost("other.example.com")).toBe("demo");
+    expect(t.subdomainFromHost(null)).toBe("demo");
+    expect(t.tenantUrl("demo", "/items")).toBe("https://inventar.test/items");
+    vi.unstubAllEnvs();
+    vi.resetModules();
+  });
 });

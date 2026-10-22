@@ -5,12 +5,12 @@ import { controlDb } from "@/db/control";
 import { databasePool, memberships, organizations, sessions, users } from "@/db/control-schema";
 import { getSession } from "./auth";
 import { UserError } from "./errors";
-import { currentTenant, rootUrl } from "./tenant";
+import { DEMO_TENANT, currentTenant, rootUrl } from "./tenant";
 
 /** /admin: само на основния домейн и само за администратори на платформата (иначе 404). */
 export async function requirePlatformAdmin() {
   const [session, tenant] = await Promise.all([getSession(), currentTenant()]);
-  if (tenant) redirect(rootUrl("/admin"));
+  if (tenant) redirect(DEMO_TENANT ? "/" : rootUrl("/admin"));
   if (!session) redirect("/login");
   if (!session.user.isPlatformAdmin) notFound();
   return session;

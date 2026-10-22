@@ -7,10 +7,16 @@ import { organizations, type Organization } from "@/db/control-schema";
 
 export const APP_DOMAIN = (process.env.APP_DOMAIN ?? "localhost:3000").toLowerCase();
 export const APP_PROTOCOL = process.env.APP_PROTOCOL ?? (APP_DOMAIN.startsWith("localhost") ? "http" : "https");
+/**
+ * Демо режим (DEMO_TENANT=<поддомейн>): целият сайт е тази една организация, без поддомейни — за хостинг,
+ * който не може да приема *.APP_DOMAIN. Порталът, регистрацията и /admin не се ползват.
+ */
+export const DEMO_TENANT = process.env.DEMO_TENANT?.trim().toLowerCase() || null;
 const RESERVED = new Set(["www", "app", "api", "admin", "docs", "static", "mail", "ftp", "cpanel", "login"]);
 
 /** Връща поддомейна от host заглавието или null за основния домейн. */
 export function subdomainFromHost(host: string | null): string | null {
+  if (DEMO_TENANT) return DEMO_TENANT;
   if (!host) return null;
   const h = host.toLowerCase();
   if (h === APP_DOMAIN || h === `www.${APP_DOMAIN}`) return null;
@@ -25,6 +31,7 @@ export function isValidSubdomain(s: string) {
 }
 
 export function tenantUrl(subdomain: string, pathname = "/") {
+  if (DEMO_TENANT) return rootUrl(pathname);
   return `${APP_PROTOCOL}://${subdomain}.${APP_DOMAIN}${pathname}`;
 }
 

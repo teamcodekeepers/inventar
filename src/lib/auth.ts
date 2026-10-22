@@ -10,7 +10,7 @@ import { getTenantDb, type TenantDb } from "@/db/tenant";
 import { sha256 } from "./auth-crypto";
 import { UserError } from "./errors";
 import { can, type Level } from "./permissions";
-import { APP_DOMAIN, APP_PROTOCOL, currentTenant, rootUrl } from "./tenant";
+import { APP_DOMAIN, APP_PROTOCOL, DEMO_TENANT, currentTenant, rootUrl } from "./tenant";
 
 export { hashPassword, verifyPassword, sha256 } from "./auth-crypto";
 
@@ -151,7 +151,11 @@ export async function requireContext(level: Level = "read"): Promise<Context> {
   if (!session) redirect("/login");
   if (org.status !== "active") redirect("/provisioning");
   const m = session.memberships.find((x) => x.organizationId === org.id);
-  if (!m) redirect(rootUrl("/portal?denied=" + encodeURIComponent(org.subdomain)));
+  if (!m) {
+    // в демо режим порталът води обратно тук — без пренасочване
+    if (DEMO_TENANT) throw new UserError(`Нямате достъп до организация „${org.name}“.`);
+    redirect(rootUrl("/portal?denied=" + encodeURIComponent(org.subdomain)));
+  }
   if (!can(m.role, level)) throw new UserError("Нямате права за това действие.");
   return { ...session, org, role: m.role, db: getTenantDb(org) };
 }

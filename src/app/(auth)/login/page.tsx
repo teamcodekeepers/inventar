@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
 import { getSession } from "@/lib/auth";
 import { login } from "@/lib/actions/auth";
-import { currentTenant, rootUrl } from "@/lib/tenant";
+import { DEMO_TENANT, currentTenant, rootUrl } from "@/lib/tenant";
 
 export const metadata: Metadata = { title: "Вход" };
 
@@ -31,12 +31,14 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
           </Link>
         </div>
       </AuthForm>
-      <p className="mt-6 text-center text-sm text-muted">
-        Нямате акаунт?{" "}
-        <Link href={tenant ? rootUrl("/register") : "/register"} className="font-medium text-accent hover:underline">
-          Създайте организация
-        </Link>
-      </p>
+      {!DEMO_TENANT && (
+        <p className="mt-6 text-center text-sm text-muted">
+          Нямате акаунт?{" "}
+          <Link href={tenant ? rootUrl("/register") : "/register"} className="font-medium text-accent hover:underline">
+            Създайте организация
+          </Link>
+        </p>
+      )}
     </>
   );
 }

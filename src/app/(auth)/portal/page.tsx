@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { createOrganization, logout } from "@/lib/actions/auth";
 import { getSession } from "@/lib/auth";
 import { ROLE_LABELS } from "@/lib/permissions";
-import { APP_DOMAIN, APP_PROTOCOL, currentTenant, rootUrl, tenantUrl } from "@/lib/tenant";
+import { APP_DOMAIN, APP_PROTOCOL, DEMO_TENANT, currentTenant, rootUrl, tenantUrl } from "@/lib/tenant";
 
 export const metadata: Metadata = { title: "Портал" };
 
 export default async function PortalPage({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
   const [session, tenant, sp] = await Promise.all([getSession(), currentTenant(), searchParams]);
-  if (tenant) redirect(rootUrl("/portal"));
+  if (tenant) redirect(DEMO_TENANT ? "/" : rootUrl("/portal"));
   if (!session) redirect("/login");
 
   return (

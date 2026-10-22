@@ -4,13 +4,13 @@ import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/auth/auth-form";
 import { getSession } from "@/lib/auth";
 import { register } from "@/lib/actions/auth";
-import { APP_DOMAIN, APP_PROTOCOL, currentTenant, rootUrl } from "@/lib/tenant";
+import { APP_DOMAIN, APP_PROTOCOL, DEMO_TENANT, currentTenant, rootUrl } from "@/lib/tenant";
 
 export const metadata: Metadata = { title: "Регистрация" };
 
 export default async function RegisterPage() {
   const [session, tenant] = await Promise.all([getSession(), currentTenant()]);
-  if (tenant) redirect(rootUrl("/register"));
+  if (tenant) redirect(DEMO_TENANT ? "/login" : rootUrl("/register"));
   if (session) redirect("/portal");
   return (
     <>
