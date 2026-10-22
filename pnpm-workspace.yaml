@@ -2,3 +2,5 @@ allowBuilds:
   esbuild: true
   sharp: false
   unrs-resolver: false
+# Плоска node_modules (без symlinks): Hostinger пуска Next.js standalone без да следва symlinks на pnpm
+nodeLinker: hoisted
