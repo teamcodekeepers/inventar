@@ -1,4 +1,4 @@
-// Tailwind CSS 4 чрез PostCSS — работи и с Turbopack (dev), и с webpack (build:webpack за споделен хостинг)
+// Tailwind CSS 4 чрез PostCSS — работи и с Turbopack (dev), и с webpack (pnpm build)
 const config = {
   plugins: { "@tailwindcss/postcss": {} },
 };
