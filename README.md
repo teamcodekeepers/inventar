@@ -126,6 +126,19 @@ Next.js тихо избира друг и приложението не отго
 6. **Build.** `pnpm build` е с webpack: Turbopack пуска отделни Node процеси за CSS, а споделеният хостинг
    (Node.js приложение на Hostinger) не го позволява. `pnpm dev` е с Turbopack.
 
+### Hostinger: Node.js приложение (Business план, демо без поддомейни)
+1. hPanel › Websites › Create website › **Web App** › GitHub (репото, клон `main`). Build `pnpm run build`,
+   start `pnpm start`, Node 22. Всяко push в `main` прави нов деплой.
+2. Две MySQL бази в hPanel (контролна и за демото) — не може една: и двете пазят историята на миграциите в
+   `__drizzle_migrations`. Сървърът е MariaDB 11.8 — работи (има `utf8mb4_0900_ai_ci`).
+3. Променливи в настройките на приложението: `APP_DOMAIN`, `APP_PROTOCOL=https`, `APP_SECRET`,
+   `DEMO_TENANT=demo`, `TENANT_DB_MODE=manual`, `CONTROL_DATABASE_URL`, `TENANT_DB_ADMIN_URL`,
+   `AUTO_MIGRATE=1`. Специалните знаци в паролата се кодират в URL-а (`@` → `%40`). Приложението ги
+   получава **при деплой** — след промяна направете Redeploy.
+4. Еднократно по SSH (Node: `export PATH=/opt/alt/alt-nodejs22/root/usr/bin:$PATH`, pnpm: `corepack pnpm`)
+   в отделно копие на проекта със същия `.env`: `pnpm db:migrate`,
+   `pnpm db:pool:add <демо база> <потребител> <парола> localhost 3306`, `pnpm db:seed`.
+
 ## Функционалности
 
 ### Основа
