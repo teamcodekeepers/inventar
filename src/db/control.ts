@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 import * as schema from "./control-schema";
+import "./relational-compat"; // `with` без LATERAL — за MariaDB
 
 /**
  * Сесиите на MySQL в UTC. mysql2 чете датите като UTC (timezone: "Z"), а стойностите по подразбиране
@@ -21,6 +22,5 @@ if (!g.__controlPool) utcSessions(pool);
 g.__controlPool = pool;
 
 /** Контролна база: организации, потребители, сесии. */
-// "planetscale": релационните заявки без LEFT JOIN LATERAL — MariaDB (Hostinger) не го поддържа
-export const controlDb = drizzle(pool, { schema, mode: "planetscale" });
+export const controlDb = drizzle(pool, { schema, mode: "default" });
 export type ControlDb = typeof controlDb;
